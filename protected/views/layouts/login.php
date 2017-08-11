@@ -18,13 +18,13 @@
     <body class="hold-transition login-page">
         <div class="login-box">
             <div class="login-logo">
-                <a href="#"><b>Traders</b> Login</a>
+                <a href="#"><b style="font-size: 26px;">JAI BAJRANG TRADING Co</b> Login</a>
             </div><!-- /.login-logo -->
             <div class="login-box-body">
                 <div class="row" style='padding-left:15px;'>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                     </div>
-                    <div class="col-md-9" style="padding-top:15px;">Sign in to start your session</div>
+                    <div class="col-md-10" style="padding-top:15px;">Sign in to start your session</div>
                 </div>
                  <?php echo $content; ?>
             </div><!-- /.login-box-body -->

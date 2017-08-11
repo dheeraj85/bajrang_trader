@@ -6,7 +6,7 @@
 // CWebApplication properties can be configured here.
 return array(
     'basePath' => dirname(__FILE__) . DIRECTORY_SEPARATOR . '..',
-    'name' => 'Agrawal Trading Application',
+    'name' => 'Jay Bajrang Trading Application',
     'defaultController' => 'site/login',
     // preloading 'log' component
     'preload' => array('log'),
@@ -56,8 +56,8 @@ return array(
         ),
         // uncomment the following to use a MySQL database
         'db' => array(
-           'connectionString' => 'mysql:host=localhost;dbname=traders',
-        //  'connectionString' => 'mysql:host=localhost;dbname=bajrang_gst',
+         //  'connectionString' => 'mysql:host=localhost;dbname=traders',
+     'connectionString' => 'mysql:host=localhost;dbname=bajrang_gst',
             'emulatePrepare' => true,
             'username' => 'root',
             'password' => '',
@@ -99,24 +99,24 @@ return array(
         'sgst_tax_percent_ratio' => '50',
         'cgst_tax_percent_ratio' => '50',
         //toc
-        'subject' => 'Subject to Anuppur Jurisdiction',  
-        'company_name' => 'AGRAWAL TRADING COMPANY',  
-        'company_addr1' => 'In Front of HJI Main Gate, Amlai',
-        'company_addr2' => 'Distt. Annuppur (M.P.)484117',
-        'company_gstin' => '23AEHPA3109B1ZI',
-        'company_pan' => 'AEHPA3109B',
-        'company_contact' => '(07652) 286875',
-        'company_mobile' => '9826649360',
-        
-        
 //        'subject' => 'Subject to Anuppur Jurisdiction',  
-//        'company_name' => 'JAI BAJRANG TRADING COMPANY',  
-//        'company_addr1' => 'Vill: Bargawan, Amlai',
+//        'company_name' => 'AGRAWAL TRADING COMPANY',  
+//        'company_addr1' => 'In Front of HJI Main Gate, Amlai',
 //        'company_addr2' => 'Distt. Annuppur (M.P.)484117',
-//        'company_gstin' => '23ASHPD17431Z1',
+//        'company_gstin' => '23AEHPA3109B1ZI',
 //        'company_pan' => 'AEHPA3109B',
-//        'company_contact' => '(07652) 286637',
+//        'company_contact' => '(07652) 286875',
 //        'company_mobile' => '9826649360',
+        
+        
+        'subject' => 'Subject to Anuppur Jurisdiction',  
+        'company_name' => 'JAI BAJRANG TRADING COMPANY',  
+        'company_addr1' => 'Vill: Bargawan, Amlai',
+        'company_addr2' => 'Distt. Annuppur (M.P.)484117',
+        'company_gstin' => '23ASHPD17431Z1',
+        'company_pan' => 'AEHPA3109B',
+        'company_contact' => '(07652) 286637',
+        'company_mobile' => '9826649360',
      
         //kasa
 //        'company_name' => 'The Oven Classics <br>A unit of Kasa Fine Foods',

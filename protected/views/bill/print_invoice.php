@@ -38,7 +38,7 @@ if (!empty($model)) {
                 <table class="table table-bordered">
                     <tr>
                         <td colspan="3" style="text-align: center">
-                            <img src="<?php echo Yii::app()->baseUrl; ?>/images/bg-logo.png" alt="LOGO" style="width:110px;height:125px;">  
+                            <img src="<?php echo Yii::app()->baseUrl; ?>/images/logo.png" alt="LOGO" style="width:110px;height:125px;">  
                         </td>
                         <td colspan="10" style="text-align: center;">
                             <b style="font-size: 18px;">

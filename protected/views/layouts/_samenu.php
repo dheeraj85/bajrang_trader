@@ -101,7 +101,19 @@
 
 </li>
 
-
+    <li class="treeview <?php echo ($active_menu == 'bill') ? 'active' : ''; ?>">
+        <a href="#">
+            <span><i class="fa fa-shopping-cart"></i> Sale</span> <i class="fa fa-angle-left pull-right"></i>
+        </a>
+        <ul class="treeview-menu" style="<?php echo ($open_class == 'bill') ? 'display:block' : ''; ?>">
+            <li class="<?php echo ($active_class == 'create') ? 'active' : ''; ?>">
+                <a href="<?php echo $this->createUrl('bill/create'); ?>"><i class="fa fa-circle-o"></i>Cost Bill</a>
+            </li> 
+            <li class="<?php echo ($active_class == 'incremental') ? 'active' : ''; ?>">
+                <a href="<?php echo $this->createUrl('bill/incremental'); ?>"><i class="fa fa-circle-o"></i>Incremental Bill</a>
+            </li> 
+        </ul>
+    </li>
 <?php if (Yii::app()->user->isSA()) { ?>
     <li class="treeview <?php echo ($active_menu == 'cds') ? 'active' : ''; ?>">
         <a href="#">
@@ -168,19 +180,7 @@
             </li>
         </ul>
     </li>
-    <li class="treeview <?php echo ($active_menu == 'bill') ? 'active' : ''; ?>">
-        <a href="#">
-            <span><i class="fa fa-shopping-cart"></i> Sale</span> <i class="fa fa-angle-left pull-right"></i>
-        </a>
-        <ul class="treeview-menu" style="<?php echo ($open_class == 'bill') ? 'display:block' : ''; ?>">
-            <li class="<?php echo ($active_class == 'create') ? 'active' : ''; ?>">
-                <a href="<?php echo $this->createUrl('bill/create'); ?>"><i class="fa fa-circle-o"></i>Cost Bill</a>
-            </li> 
-            <li class="<?php echo ($active_class == 'incremental') ? 'active' : ''; ?>">
-                <a href="<?php echo $this->createUrl('bill/incremental'); ?>"><i class="fa fa-circle-o"></i>Incremental Bill</a>
-            </li> 
-        </ul>
-    </li>
+
 
    <li class="treeview <?php echo ($active_menu == 'reports') ? 'active' : ''; ?>">
         <a href="#">

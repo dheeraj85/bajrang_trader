@@ -1,7 +1,7 @@
 <div class="panel-body" >
-    <?php if(!empty($err_msg)){?>
-    <div id="login-alert"><?php echo $err_msg;?></div>
-    <?php }?>
+    <?php if (!empty($err_msg)) { ?>
+        <div id="login-alert"><?php echo $err_msg; ?></div>
+    <?php } ?>
     <?php
     $form = $this->beginWidget('CActiveForm', array(
         'id' => 'login_form',
@@ -11,8 +11,9 @@
         ),
     ));
     ?>  
-     <?php echo $form->error($model, 'username', array('class' => 'alert alert-error')); ?>
-     <?php echo $form->error($model, 'password', array('class' => 'alert alert-error')); ?> 
+    
+    <?php echo $form->error($model, 'username', array('class' => 'alert alert-error')); ?>
+    <?php echo $form->error($model, 'password', array('class' => 'alert alert-error')); ?> 
     <div class="form-group has-feedback">            
         <?php
         echo $form->textField($model, 'username', array('class' => "form-control", 'placeholder' => "Mobile No."));
