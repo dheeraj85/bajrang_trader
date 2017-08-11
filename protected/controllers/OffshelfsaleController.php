@@ -1,0 +1,513 @@
+<?php
+
+class OffshelfsaleController extends Controller {
+
+    /**
+     * @var string the default layout for the views. Defaults to '//layouts/column2', meaning
+     * using two-column layout. See 'protected/views/layouts/column2.php'.
+     */
+    public $active_menu = '';
+    public $active_class = '';
+    public $open_class = '';
+    public $layout = '//layouts/column2';
+
+    /**
+     * @return array action filters
+     */
+    public function filters() {
+        return array(
+            'accessControl', // perform access control for CRUD operations
+//            'postOnly + delete', // we only allow deletion via POST request
+        );
+    }
+
+    /**
+     * Specifies the access control rules.
+     * This method is used by the 'accessControl' filter.
+     * @return array access control rules
+     */
+    public function accessRules() {
+        return array(
+            array('allow', // allow all users to perform 'index' and 'view' actions
+                'actions' => array('index', 'view'),
+                'users' => array('*'),
+            ),
+            array('allow', // allow authenticated user to perform 'create' and 'update' actions
+                'actions' => array('invoice', 'memo', 'removeitem', 'updatedisc', 'updateqty',
+                    'additems', 'getItemDetail', 'sale', 'create', 'update', 'delete', 'ledger',
+                    'getitem', 'getpayitem', 'searchcustomerinvoice', 'savevoucher', 'savereversecharges',
+                    'updateprice'),
+                'users' => array('@'),
+            ),
+            array('allow', // allow admin user to perform 'admin' and 'delete' actions
+                'actions' => array('admin', 'delete'),
+                'users' => array('admin'),
+            ),
+            array('deny', // deny all users
+                'users' => array('*'),
+            ),
+        );
+    }
+
+    /**
+     * Displays a particular model.
+     * @param integer $id the ID of the model to be displayed
+     */
+    public function actionSavevoucher() {
+        //print_r($_POST);
+        $msg = 'fail';
+        if (!empty($_POST['amt']) && !empty($_POST['customer_id'])) {
+            $amts = $_POST['amt'];
+            $cid = $_POST['customer_id'];
+            //  echo $cid; exit();
+            $total_amt = 0.00;
+            foreach ($amts as $k => $v) {
+                if (!empty($v)) {
+                    $pos = Offshelfsale::model()->findByPk($k);
+                    //  print_r($pos->attributes);
+                    $credit = new Creditaccount();
+                    $credit->bill_no = $pos->invoice_number;
+                    $credit->pos_id = $pos->id;
+                    $credit->pos_type = 'party';
+                    $credit->credit_amount = $v;
+                    $credit->dated = date('Y-m-d');
+                    $credit->voucher_no = $_POST['voucher_no'];
+                    $credit->remark = "Amount of rs " . $v . " for the bill no " . $credit->bill_no . " by user " . Yii::app()->user->name;
+                    // print_r($credit);
+                    $credit->save();
+                    $total_amt = $total_amt + $v;
+                }
+            }
+            $customer = Customer::model()->findByPk($cid);
+            $customer->balance = $customer->balance - $total_amt;
+            $customer->save();
+            $msg = 'success';
+        }
+        echo CJSON::encode(array('msg' => $msg));
+    }
+
+    public function actionSearchcustomerinvoice() {
+        $customer_id = $_POST['customer_id'];
+        $this->renderPartial('_searchcustomerinvoice', array(
+            'customer_id' => $customer_id, 'fromdate' => $_POST['from_dated'], 'todate' => $_POST['to_dated'],
+        ));
+    }
+
+    public function actionGetitem() {
+        $sale = Offshelfsale::model()->findByPk($_GET['invoice_id']);
+        $this->renderPartial('_getitem', array(
+            'sale' => $sale,
+        ));
+    }
+
+    public function actionGetpayitem() {
+        $sale = Offshelfsale::model()->findByPk($_GET['invoice_id']);
+        $payments = Creditaccount::model()->findAllByAttributes(array('pos_id' => $sale->id));
+        $this->renderPartial('_getpayitem', array(
+            'sale' => $sale,
+            'payments' => $payments,
+        ));
+    }
+
+    public function actionLedger() {
+        $this->active_menu = "pos";
+        $this->open_class = "menu";
+        $this->active_class = "customer_ledger";
+        $plist = "";
+        $list = "";
+        $model = new Customer();
+        $type = isset($_POST['type']) ? $_POST['type'] : '';
+        if (isset($_POST['Customer'])) {
+            $model->attributes = $_POST['Customer'];
+            $list = Customer::model()->findByPk($_POST['Customer']['id']);
+        } else if (isset($_GET['cid'])) {
+            $list = Customer::model()->findByPk($_GET['cid']);
+        }
+        $cid = isset($_GET['cid']) ? $_GET['cid'] : $_POST['Customer']['id'];
+
+        $vouchers = Voucher::model()->findAllByAttributes(array('receiver_id' => $cid));
+
+        if (!empty($_POST['from_dated']) && !empty($_POST['to_dated'])) {
+            $fromdate = $_POST['from_dated'];
+            $todate = $_POST['to_dated'];
+            if ($fromdate != "" && $todate != "" && !empty($cid)) {
+                //  if ($type == 'sp_cust') {
+                $plist = ShelfSale::model()->findAllBySql("select * from off_shelf_sale where order_date between '$fromdate' and '$todate' and customer_id=$cid and txn_type='customer' order by id desc");
+                //  } else if ($type == 'in_trf') {
+                //  $plist = ShelfSale::model()->findAllBySql("select * from off_shelf_sale where order_date between '$fromdate' and '$todate' and customer_id=$cid and txn_type='internal' order by id desc");
+                //}
+            }
+        } else {
+            if (!empty($cid)) {
+                // if ($type == 'sp_cust') {
+                $plist = ShelfSale::model()->findAllBySql("select * from off_shelf_sale where customer_id=$cid and txn_type in('customer','internal')  order by id desc");
+                //  } else if ($type == 'in_trf') {
+                //    $plist = ShelfSale::model()->findAllBySql("select * from off_shelf_sale where customer_id=$cid and txn_type='internal' order by id desc");
+                // }
+            }
+        }
+
+        $this->render('ledger', array(
+            'model' => $model,
+            'list' => $list,
+            'plist' => $plist,
+            'type' => $type,
+            'vouchers' => $vouchers
+        ));
+    }
+
+    public function actionView($id) {
+        $this->render('view', array(
+            'model' => $this->loadModel($id),
+        ));
+    }
+
+    public function actionInvoice() {
+        unset(Yii::app()->session['print_type']);
+        $id = $_POST['id'];
+        $print_type = $_POST['print_type'];
+        Yii::app()->session['print_type'] = $print_type;
+
+        $this->layout = 'pos_front_layout';
+        if (!empty(Yii::app()->user->id)) {
+
+            $sale = Offshelfsale::model()->findByPk($id);
+            if (empty($sale->invoice_number)) {
+
+                $inv = Offshelfsale::model()->findBySql("SELECT MAX(invoice_number) as invoice_number FROM off_shelf_sale where txn_type='customer' or txn_type='special_cash'");
+                if (!empty($inv->invoice_number)) {
+                    $invoice = preg_replace('/\D/', '', $inv->invoice_number) + 1;
+                } else {
+                    $invoice = '1001';
+                }
+//                echo $invoice;
+//                exit();
+                $inv_no = Globalpreferences::getValueByParamName('invoice_prefix') . $invoice;
+
+                $sale->invoice_number = $inv_no;
+                if (!empty($sale->customer_id))
+                    $customer = Customer::model()->findByPk($sale->customer_id);
+                else
+                    $customer = "";
+                $amt = 0.00;
+                foreach (Offshelfsaleitems::model()->findAllByAttributes(array('shelf_sale_id' => $sale->id)) as $off_shelf) {
+//                    print_r($off_shelf->attributes);
+//                    echo"<br>";
+                    $amt = $amt + $off_shelf->amount;
+                    $shelf = Shelfitems::model()->findByAttributes(array('item_id' => $off_shelf->item_id));
+                    if (!empty($shelf)) {
+                        d21('Item name' . $off_shelf->description . ' Qty ' . $off_shelf->qty . ' sale by ' . Yii::app()->user->getUsername() . ' On Dated ' . date('Y-m-d H:i:s'), "sale");
+                        $debit_item_ledger = new Itemledger();
+                        $available_qty = $shelf->total_qty - $off_shelf->qty;
+                        $shelf->total_qty = $available_qty;
+                        $shelf->update();
+                        $debit_item_ledger->addDebitFrmShelf($off_shelf->item_id, "shelf", $off_shelf->id, $off_shelf->qty, $shelf->total_qty);
+                    }
+                }
+
+                //       exit();
+//            print_r($sale->attributes);
+//                 print_r($customer->getErrors());
+                if (!empty($customer)) {
+                    $balance = $customer->balance + $amt;
+                    $customer->balance = $balance;
+                    $customer->save();
+                }
+                $sale->update();
+            }
+            //      exit();
+        }
+
+        $this->render('print_invoice', array('sale' => $sale));
+    }
+
+    public function actionMemo($id) {
+        $this->layout = 'pos_front_layout';
+        $sale = Offshelfsale::model()->findByPk($id);
+        $this->render('print_memo', array('sale' => $sale));
+    }
+
+    public function actionRemoveitem($id) {
+        $id = $_GET['id'];
+        $items = Offshelfsaleitems::model()->findByPk($id);
+        $mkot_sale = Offshelfsale::model()->findByPk($items->shelf_sale_id);
+        $sid = $items->shelf_sale_id;
+        //    $shelf = Shelfitems::model()->findByPk($items->item_id);
+        //    if (!empty($shelf)) {
+//            $available_qty = $shelf->total_qty + $items->qty;
+//            $shelf->total_qty = $available_qty;
+//            $shelf->update();
+        $items->delete();
+        //   }
+        $this->redirect(array('sale', 'id' => $sid));
+    }
+
+    //========== update discount/price and qty on special customer sale ==============
+    protected function getUpdateSale($id, $value, $type) {
+        $shelf_item = Offshelfsaleitems::model()->findByPk($id);
+        $item_model = Purchaseitem::model()->findByPk($shelf_item->item_id);
+        $taxes = $item_model->gst_percent + $item_model->cess_tax;
+        if ($type == 'qty') {
+            $shelf_item->qty = $value;
+        } else if ($type == 'price') {
+            $shelf_item->unit_price = $value;
+        } else if ($type == 'discount') {
+            $shelf_item->discount_percent = $value;
+        }
+        $amt = $shelf_item->qty * $shelf_item->unit_price;
+        $disc = round(($amt * ($shelf_item->discount_percent / 100)), 2);
+        $amt_after_disc = $amt - $disc;
+        $shelf_item->disc_amt = $disc;
+        $amt_without_tax = round((($amt_after_disc * 100) / ($taxes + 100)), 2);
+        $tax_amt = $amt_after_disc - $amt_without_tax;
+        $shelf_item->unit_tax = $taxes;
+        $shelf_item->tax_amt = $tax_amt;
+        $shelf_item->amt_without_tax = $amt_without_tax;
+        $shelf_item->amount = $amt_after_disc;
+        $shelf_item->save();
+        return $shelf_item->shelf_sale_id;
+    }
+
+    public function actionUpdateqty() {
+        $id = $_GET['id'];
+        $value = $_GET['value'];
+        $type = $_GET['type'];
+        $shelf_sale_id = $this->getUpdateSale($id, $value, $type);
+//        if (!empty($shelf)) { 
+//            $avail_qty = $shelf->total_qty;
+//            Yii::app()->user->setFlash('special_c', "You Have Only $avail_qty Quantity of this item in your Stock");
+//        } else {
+//            Yii::app()->user->setFlash('special_c', 'This Item is not in your Inventry, Please Add This Item In Your Stock...!!!');
+//        }
+        $this->redirect(array('sale', 'id' => $shelf_sale_id));
+    }
+
+    public function actionAdditems() {
+        $sid = $_GET['sid'];
+        $item = $_GET['item'];
+        $shelf = Shelfitems::model()->findByPk($item);
+
+        if (!empty($shelf)) {
+            $item_model = Purchaseitem::model()->findByPk($shelf->item_id);
+            //print_r($item_model->attributes);
+            $customer_sale = Offshelfsale::model()->findByPk($sid);
+            $discount = Customerdiscount::model()->findByAttributes(array('customer_id' => $customer_sale->customer_id, 'item_id' => $item));
+            //$category_taxes = Categorytaxes::model()->findByAttributes(array('pos_type' => 'OTS', 'p_category_id' => $shelf->p_category_id, 'p_sub_category_id' => $shelf->p_sub_category_id));
+            $taxes = $item_model->gst_percent + $item_model->cess_tax;
+            $mkot_items = new Offshelfsaleitems();
+            $mkot_items->shelf_sale_id = $sid;
+            $mkot_items->item_id = $shelf->item_id;
+            //need to add here shelf item id not purchase item id
+            //again changed item_id to purchase item id dated 26-05-2017
+            $mkot_items->description = $item_model->itemname;
+            $mkot_items->qty = 1;
+            $mkot_items->unit_price = $shelf->sale_price;
+            $mkot_items->discount_percent = $discount->discount;
+            $amt = $mkot_items->qty * $mkot_items->unit_price;
+            $disc = round(($amt * ($mkot_items->discount_percent / 100)), 2);
+            $amt_after_disc = $amt - $disc;
+            $mkot_items->disc_amt = $disc;
+            $amt_without_tax = round((($amt_after_disc * 100) / ($taxes + 100)), 2);
+            $tax_amt = $amt_after_disc - $amt_without_tax;
+            $mkot_items->unit_tax = $tax->tax_percent;
+            $mkot_items->tax_amt = $tax_amt;
+            $mkot_items->amt_without_tax = $amt_without_tax;
+            $mkot_items->amount = $amt_after_disc;
+//        print_r($mkot_items->attributes); 
+//        exit();
+            if ($mkot_items->save()) {
+                
+            } else {
+                print_r($mkot_items->getErrors());
+            }
+            $avail_qty = $shelf->total_qty;
+            Yii::app()->user->setFlash('special_c', "You Have Only $avail_qty Quantity of this item in your Stock");
+        } else {
+            Yii::app()->user->setFlash('special_c', 'This Item is not in your Inventry, Please Add This Item In Your Stock...!!!');
+        }
+        $this->redirect(array('sale', 'id' => $sid, 'val' => $mkot_items->id));
+    }
+
+    public function actionGetItemDetail() {
+        $items = Yii::app()->db->createCommand()
+                ->select('si.id,pi.itemname as display')
+                ->from('shelf_items si')
+                ->join('purchase_item pi', 'pi.id=si.item_id')
+                ->queryAll();
+        echo CJSON::encode(array('data' => $items));
+    }
+
+    public function actionSavereversecharges() {
+//        print_r($_POST);
+        //      exit();
+        $msg = "fail";
+        if (!empty($_POST['shelf_sale_id']) && !empty($_POST['settings'])) {
+            $settings = $_POST['settings'];
+            $shelf_id = $_POST['shelf_sale_id'];
+            foreach ($settings as $k => $v) {
+                $sale = Salereversecharge::model()->findByAttributes(array('shelf_sale_id' => $shelf_id, 'invoice_settings_id' => $k));
+                if (!empty($sale->id)) {
+                    $sale->amount = $v;
+                    $sale->save();
+                } else {
+                    $model = new Salereversecharge();
+                    $model->shelf_sale_id = $shelf_id;
+                    $model->invoice_settings_id = $k;
+                    $model->amount = $v;
+                    $model->save();
+                }
+            }
+            $msg = "success";
+        }
+        echo CJSON::encode(array('msg' => $msg));
+    }
+
+    public function actionSale($id) {
+        $this->active_menu = "sale";
+        $this->open_class = "sale";
+        $this->active_class = "sale";
+        $this->layout = 'pos_main';
+        if (!empty(Yii::app()->user->id)) {
+            $val = $_GET['val'];
+            $model = Offshelfsale::model()->findByPk($id);
+            $this->render('sale', array(
+                'model' => $model,
+                'val' => $val,
+            ));
+        }
+    }
+
+    /**
+     * Creates a new model.
+     * If creation is successful, the browser will be redirected to the 'view' page.
+     */
+    public function actionCreate() {
+        $this->active_menu = "sale";
+        $this->open_class = "sale";
+        $this->active_class = "sale";
+        $model = new Offshelfsale;
+        $model->txn_type = 'customer';
+        // Uncomment the following line if AJAX validation is needed
+        // $this->performAjaxValidation($model);
+        if (isset($_POST['Offshelfsale'])) {
+            $cash_drawer = Cashdrawer::model()->findByAttributes(array('date' => date('Y-m-d'), 'user_to' => Yii::app()->user->id), array('order' => 'id desc', 'limit' => 1));
+            $model->attributes = $_POST['Offshelfsale'];
+            $model->created_by = Yii::app()->user->id;
+            $model->counter_id = $cash_drawer->counter_id;
+            $model->tax_type = $_POST['Offshelfsale']['tax_type'];
+            $model->order_date = date('Y-m-d');
+            $model->order_time = date('h:m:s');
+            $model->consignee_state = Gststatecodes::model()->findByAttributes(array('state_code' => $model->consignee_state_code))->state_name;
+            if ($model->save()) {
+                $this->redirect(array('sale', 'id' => $model->id));
+            }
+        }
+
+        $this->render('create', array(
+            'model' => $model,
+        ));
+    }
+
+    /**
+     * Updates a particular model.
+     * If update is successful, the browser will be redirected to the 'view' page.
+     * @param integer $id the ID of the model to be updated
+     */
+    public function actionUpdate($id) {
+        $this->active_menu = "sale";
+        $this->open_class = "sale";
+        $this->active_class = "sale";
+        $model = $this->loadModel($id);
+        // Uncomment the following line if AJAX validation is needed
+        // $this->performAjaxValidation($model);
+
+        if (isset($_POST['Offshelfsale'])) {
+            $model->attributes = $_POST['Offshelfsale'];
+            $model->created_by = Yii::app()->user->id;
+            $model->counter_id = $cash_drawer->counter_id;
+            $model->tax_type = $_POST['Offshelfsale']['tax_type'];
+            $model->order_date = date('Y-m-d');
+            $model->order_time = date('h:m:s');
+            $model->consignee_state = Gststatecodes::model()->findByAttributes(array('state_code' => $model->consignee_state_code))->state_name;
+            if ($model->save()) {
+                $this->redirect(array('create'));
+            }
+        }
+
+        $this->render('update', array(
+            'model' => $model,
+        ));
+    }
+
+    /**
+     * Deletes a particular model.
+     * If deletion is successful, the browser will be redirected to the 'admin' page.
+     * @param integer $id the ID of the model to be deleted
+     */
+    public function actionDelete($id) {
+//        if (Yii::app()->request->isPostRequest) {
+        // we only allow deletion via POST request
+        $model = $this->loadModel($id);
+        if (!empty($model)) {
+            foreach (Offshelfsaleitems::model()->findAllByAttributes(array('shelf_sale_id' => $model->id)) as $item) {
+                $item->delete();
+            }
+            $model->delete();
+        }
+        // if AJAX request (triggered by deletion via admin grid view), we should not redirect the browser
+        if (!isset($_GET['ajax']))
+            $this->redirect(isset($_POST['returnUrl']) ? $_POST['returnUrl'] : array('create'));
+//        } else
+//            throw new CHttpException(400, 'Invalid request. Please do not repeat this request again.');
+    }
+
+    /**
+     * Lists all models.
+     */
+    public function actionIndex() {
+        $dataProvider = new CActiveDataProvider('Offshelfsale');
+        $this->render('index', array(
+            'dataProvider' => $dataProvider,
+        ));
+    }
+
+    /**
+     * Manages all models.
+     */
+    public function actionAdmin() {
+        $model = new Offshelfsale('search');
+        $model->unsetAttributes();  // clear any default values
+        if (isset($_GET['Offshelfsale']))
+            $model->attributes = $_GET['Offshelfsale'];
+
+        $this->render('admin', array(
+            'model' => $model,
+        ));
+    }
+
+    /**
+     * Returns the data model based on the primary key given in the GET variable.
+     * If the data model is not found, an HTTP exception will be raised.
+     * @param integer $id the ID of the model to be loaded
+     * @return Offshelfsale the loaded model
+     * @throws CHttpException
+     */
+    public function loadModel($id) {
+        $model = Offshelfsale::model()->findByPk($id);
+        if ($model === null)
+            throw new CHttpException(404, 'The requested page does not exist.');
+        return $model;
+    }
+
+    /**
+     * Performs the AJAX validation.
+     * @param Offshelfsale $model the model to be validated
+     */
+    protected function performAjaxValidation($model) {
+        if (isset($_POST['ajax']) && $_POST['ajax'] === 'offshelfsale-form') {
+            echo CActiveForm::validate($model);
+            Yii::app()->end();
+        }
+    }
+
+}

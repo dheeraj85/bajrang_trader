@@ -1,0 +1,10 @@
+[21-Nov-2016 13:37:32 Asia/Kolkata] PHP Fatal error:  Call to a member function delete() on a non-object in /home/shree85/public_html/oms/protected/controllers/IndentmasterController.php on line 210
+[21-Nov-2016 13:37:32 Asia/Kolkata] PHP Fatal error:  Call to a member function delete() on a non-object in /home/shree85/public_html/oms/protected/controllers/IndentmasterController.php on line 210
+[21-Nov-2016 13:37:32 Asia/Kolkata] PHP Fatal error:  Call to a member function delete() on a non-object in /home/shree85/public_html/oms/protected/controllers/IndentmasterController.php on line 210
+[05-Dec-2016 17:09:46 Asia/Kolkata] PHP Fatal error:  Class 'PurchaseItem' not found in /home/shree85/public_html/framework/db/ar/CActiveRecord.php on line 395
+[05-Dec-2016 17:12:32 Asia/Kolkata] PHP Fatal error:  Call to undefined method Indentitemsissue::getstockqty() in /home/shree85/public_html/framework/base/CComponent.php(612) : eval()'d code on line 1
+[05-Dec-2016 17:12:35 Asia/Kolkata] PHP Fatal error:  Call to undefined method Indentitemsissue::getstockqty() in /home/shree85/public_html/framework/base/CComponent.php(612) : eval()'d code on line 1
+[05-Dec-2016 17:19:59 Asia/Kolkata] PHP Fatal error:  Call to undefined method Indentitemsissue::getstockqty() in /home/shree85/public_html/framework/base/CComponent.php(612) : eval()'d code on line 1
+[09-Dec-2016 12:17:42 Asia/Kolkata] PHP Fatal error:  Class 'PurchaseCategory' not found in /home/shree85/public_html/framework/db/ar/CActiveRecord.php on line 395
+[09-Dec-2016 12:17:53 Asia/Kolkata] PHP Fatal error:  Class 'PurchaseCategory' not found in /home/shree85/public_html/framework/db/ar/CActiveRecord.php on line 395
+[09-Dec-2016 12:27:11 Asia/Kolkata] PHP Fatal error:  Class 'PurchaseCategory' not found in /home/shree85/public_html/framework/db/ar/CActiveRecord.php on line 395
